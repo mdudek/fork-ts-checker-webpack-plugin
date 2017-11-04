@@ -1,13 +1,13 @@
 
 class WorkSet {
-  workDomain: any[];
+  workDomain: ReadonlyArray<any>;
   workNumber: number;
   workDivision: number;
   workSize: number;
   workBegin: number;
   workEnd: number;
 
-  constructor(workDomain: any[], workNumber: number, workDivision: number) {
+  constructor(workDomain: ReadonlyArray<any>, workNumber: number, workDivision: number) {
     this.workDomain = workDomain;
     this.workNumber = workNumber;
     this.workDivision = workDivision;

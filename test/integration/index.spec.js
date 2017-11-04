@@ -11,7 +11,14 @@ describe('[INTEGRATION] index', function () {
   var plugin;
 
   function createCompiler(options, happyPackMode) {
-    plugin = new ForkTsCheckerWebpackPlugin(Object.assign({}, options, { silent: true }));
+    if (!options) {
+      options = {};
+    }
+    if (!options.tslint) {
+      options.tslint = './tslint.json';
+    }
+
+    plugin = new ForkTsCheckerWebpackPlugin(Object.assign({}, options, { silent: false }));
 
     var tsLoaderOptions = happyPackMode 
         ? { happyPackMode: true, silent: true } 
@@ -212,6 +219,7 @@ describe('[INTEGRATION] index', function () {
     
     compiler.run(function(error, stats) {
       expect(stats.compilation.errors.length).to.be.equal(1);
+      expect(stats.compilation.warnings.length).to.be.equal(1);
       callback();
     });
   });
@@ -221,6 +229,17 @@ describe('[INTEGRATION] index', function () {
     
     compiler.run(function(error, stats) {
       expect(stats.compilation.errors.length).to.be.equal(2);
+      expect(stats.compilation.warnings.length).to.be.equal(1);
+      callback();
+    });
+  });
+
+  it('should not find syntactic errors when checkSyntacticErrors is true but files with syntactic errors are excluded', function (callback) {
+    var compiler = createCompiler({ checkSyntacticErrors: true, tslint: './tslint.excludedFiles.json'  }, true);
+
+    compiler.run(function(error, stats) {
+      expect(stats.compilation.errors.length).to.be.equal(2);
+      expect(stats.compilation.warnings.length).to.be.equal(0);
       callback();
     });
   });

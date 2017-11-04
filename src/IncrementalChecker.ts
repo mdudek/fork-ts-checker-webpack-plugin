@@ -8,6 +8,7 @@ import FilesWatcher = require('./FilesWatcher');
 import WorkSet = require('./WorkSet');
 import NormalizedMessage = require('./NormalizedMessage');
 import CancellationToken = require('./CancellationToken');
+import * as minimatch from 'minimatch';
 
 class IncrementalChecker {
   programConfigFile: string;
@@ -152,12 +153,12 @@ class IncrementalChecker {
     const workSet = new WorkSet(filesToCheck, this.workNumber, this.workDivision);
 
     // check given work set
-    workSet.forEach(sourceFile => {
+    workSet.forEach((sourceFile: any) => {
       if (cancellationToken) {
         cancellationToken.throwIfCancellationRequested();
       }
 
-      const diagnosticsToRegister: ts.Diagnostic[] = this.checkSyntacticErrors
+      const diagnosticsToRegister = this.checkSyntacticErrors
         ? []
           .concat(this.program.getSemanticDiagnostics(sourceFile, cancellationToken))
           .concat(this.program.getSyntacticDiagnostics(sourceFile, cancellationToken))
@@ -177,9 +178,16 @@ class IncrementalChecker {
       throw new Error('Cannot get lints - checker has no linter.');
     }
 
-    // select files to lint
+    const isFileExcluded = (filePath: string) => {
+        if (!this.linterConfig || !this.linterConfig.linterOptions || !this.linterConfig.linterOptions.exclude) {
+            return false;
+        }
+        const fullPath = path.resolve(filePath);
+        return this.linterConfig.linterOptions.exclude.some(pattern => minimatch(fullPath, pattern));
+    };
+      // select files to lint
     const filesToLint = this.files.keys().filter(filePath =>
-      !endsWith(filePath, '.d.ts') && !this.files.getData(filePath).linted
+      !endsWith(filePath, '.d.ts') && !this.files.getData(filePath).linted && !isFileExcluded(filePath)
     );
 
     // calculate subset of work to do
